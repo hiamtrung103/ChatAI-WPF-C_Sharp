@@ -24,22 +24,24 @@
         </StackPanel>
 
         <!-- Khung chat chính -->
-        <Grid Grid.Column="1" Background="White" Margin="10">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
-            <TextBlock Name="CurrentTopicTextBlock" FontWeight="Bold" FontSize="16" Margin="10"/>
-            <ScrollViewer Name="ChatScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                <StackPanel Name="ChatStackPanel">
-                    <!-- Tin nhắn sẽ được thêm vào đây -->
+        <Border Grid.Column="1" Background="White" Margin="10" CornerRadius="15">
+            <Grid Background="White">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock Name="CurrentTopicTextBlock" FontWeight="Bold" FontSize="16" Margin="10"/>
+                <ScrollViewer Name="ChatScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Name="ChatStackPanel">
+                        <!-- Tin nhắn sẽ được thêm vào đây -->
+                    </StackPanel>
+                </ScrollViewer>
+                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="10">
+                    <wv2:WebView2 Name="ChatWebView" Source="C:\Users\trung\Documents\GitHub\ChatAI-WPF-C_Sharp\ChatBox.html" Width="690" Height="60" />
                 </StackPanel>
-            </ScrollViewer>
-            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="10">
-                <wv2:WebView2 Name="ChatWebView" Source="C:\Users\trung\Downloads\Compressed\Nguyen Hoang Trung - WPF UI\ChatBox.html" Width="690" Height="60" />
-            </StackPanel>
-        </Grid>
+            </Grid>
+        </Border>
 
         <!-- Khung cho các tab Trợ lý và Mô hình -->
         <TabControl Grid.Column="2" Background="#F6F5F8">
