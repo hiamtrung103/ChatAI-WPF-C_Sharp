@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Box</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #chat-container {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 15px;
+        }
+
+        #prompt-textarea {
+            width: calc(100% - 48px);
+            height: 40px;
+            resize: none;
+            border: none;
+            background: transparent;
+            outline: none;
+            padding-left: 10px;
+            overflow-y: hidden;
+            border-radius: 15px;
+        }
+
+        .send-button {
+            width: 40px;
+            height: 40px;
+            background-color: black;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+        }
+
+            .send-button:disabled {
+                background-color: #D7D7D7;
+                color: #f4f4f4;
+            }
+    </style>
+</head>
+<body>
+    <div id="chat-container" class="flex flex-col h-full">
+        <div class="flex items-center">
+            <textarea id="prompt-textarea" placeholder="Nhập tin nhắn tại đây..."></textarea>
+            <button id="send-button" class="send-button" disabled>
+                <img width="16" height="16" src="https://img.icons8.com/fluency/48/collapse-arrow.png" alt="collapse-arrow" />
+            </button>
+        </div>
+    </div>
+    <script>
+        document.getElementById('prompt-textarea').addEventListener('input', function () {
+            document.getElementById('send-button').disabled = !this.value.trim();
+        });
+
+        document.getElementById('send-button').addEventListener('click', function () {
+            // phần này lấy nội dung chat và gửi về WPF
+            const message = document.getElementById('prompt-textarea').value;
+            window.chrome.webview.postMessage(message);
+            document.getElementById('prompt-textarea').value = '';
+            this.disabled = true;
+        });
+    </script>
+</body>
+</html>
