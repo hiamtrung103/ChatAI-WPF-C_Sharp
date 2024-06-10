@@ -38,7 +38,7 @@
                     </StackPanel>
                 </ScrollViewer>
                 <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="10">
-                    <wv2:WebView2 Name="ChatWebView" Source="C:\Users\trung\Documents\GitHub\ChatAI-WPF-C_Sharp\ChatBox.html" Width="690" Height="60" />
+                    <wv2:WebView2 x:Name="ChatWebView" Source="C:\Users\trung\Documents\GitHub\ChatAI-WPF-C_Sharp\ChatBox.html" Width="690" Height="60" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -52,7 +52,7 @@
                 </StackPanel>
             </TabItem>
             <TabItem Header="Mô hình">
-                <StackPanel Margin="10">
+                <StackPanel Margin="10,0,2,0">
                     <ComboBox Name="ModelComboBox" Margin="0,0,0,10">
                         <ComboBoxItem Content="OpenAI GPT-3.5-turbo-16k" IsSelected="True"/>
                         <ComboBoxItem Content="OpenAI GPT 4"/>

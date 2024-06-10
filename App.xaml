@@ -1,7 +1,7 @@
-﻿<Application x:Class="Social_Blade_Dashboard.App"
+﻿<Application x:Class="WPF_UI.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:Social_Blade_Dashboard"
+             xmlns:local="clr-namespace:WPF_UI"
              xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
@@ -23,6 +23,9 @@
                 <Setter Property="ShowLabels" Value="False"></Setter>
                 <Setter Property="IsEnabled" Value="False"></Setter>
             </Style>
+            <FontFamily x:Key="RobotoRegular">/WPF_UI;component/Fonts/#Roboto</FontFamily>
+            <FontFamily x:Key="RobotoBold">/WPF_UI;component/Fonts/#Roboto Bold</FontFamily>
+            <FontFamily x:Key="RobotoItalic">/WPF_UI;component/Fonts/#Roboto Italic</FontFamily>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

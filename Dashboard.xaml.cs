@@ -12,33 +12,42 @@ using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Web.WebView2.Core;
 using WPF_UI;
+using MongoDB.Driver;
+using System.Configuration;
+using System.Windows.Media.Imaging;
 
 namespace WPF_UI
 {
     public partial class Dashboard : UserControl
     {
         private static readonly HttpClient httpClient = new HttpClient();
+        private readonly IMongoCollection<Thread> _threadsCollection;
         private List<Thread> chuDe = new List<Thread>();
         private int demChuDe = 0;
         private int chiSoChuDeHienTai = -1;
 
-        private string duongDanLichSuChat = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "ChatHistoryTrungAI.json");
-
         public Dashboard()
         {
             InitializeComponent();
-            TaiChuDeTuFile();
-            if (chuDe.Count == 0)
-            {
-                TaoChuDeMoi();
-            }
-            CapNhatTieuDeHienTai();
+
+            var mongoClient = new MongoClient(ConfigurationManager.AppSettings["MongoDbConnectionString"]);
+            var mongoDatabase = mongoClient.GetDatabase(ConfigurationManager.AppSettings["MongoDbDatabaseName"]);
+            _threadsCollection = mongoDatabase.GetCollection<Thread>(ConfigurationManager.AppSettings["MongoDbThreadsCollectionName"]);
+
+            TaiChuDeTuMongo(); // Tải các chủ đề từ MongoDB
+            CapNhatTieuDeHienTai(); // Cập nhật tiêu đề hiện tại
+
             ChatWebView.CoreWebView2InitializationCompleted += ChatWebView_CoreWebView2InitializationCompleted;
         }
+
 
         private async void ChatWebView_CoreWebView2InitializationCompleted(object sender, CoreWebView2InitializationCompletedEventArgs e)
         {
             ChatWebView.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
+            if (chiSoChuDeHienTai >= 0)
+            {
+                TaiChuDe(chuDe[chiSoChuDeHienTai]); // Hiển thị lại chủ đề hiện tại sau khi khởi tạo WebView
+            }
         }
 
         private async void CoreWebView2_WebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs e)
@@ -51,7 +60,7 @@ namespace WPF_UI
                 try
                 {
                     string phanHoiBot = await LayPhanHoiChatbot(tinNhanNguoiDung);
-                    ThemTinNhanVaoChat(phanHoiBot, "Bot", DateTime.Now);
+                    ThemTinNhanVaoChat(phanHoiBot, "TrungAI", DateTime.Now);
                     LuuTinNhanVaoChuDe(tinNhanNguoiDung, phanHoiBot, thoiGian);
                 }
                 catch (HttpRequestException httpEx)
@@ -89,7 +98,7 @@ namespace WPF_UI
                 chuDe.Title = inputDialog.ResponseText;
                 CapNhatDanhSachChuDe();
                 CapNhatTieuDeHienTai();
-                LuuChuDeVaoFile();
+                LuuChuDeVaoMongo();
             }
         }
 
@@ -102,14 +111,22 @@ namespace WPF_UI
             {
                 ChatStackPanel.Children.Clear();
             }
-            LuuChuDeVaoFile();
+            LuuChuDeVaoMongo();
         }
 
         private void XoaChuDe_Click(object sender, RoutedEventArgs e)
         {
             var menuItem = sender as MenuItem;
             var chuDe = menuItem.Tag as Thread;
+
+            // Xóa chủ đề khỏi danh sách chủ đề trong bộ nhớ
             this.chuDe.Remove(chuDe);
+
+            // Xóa chủ đề khỏi MongoDB
+            var filter = Builders<Thread>.Filter.Eq(t => t.Id, chuDe.Id);
+            _threadsCollection.DeleteOne(filter);
+
+            // Cập nhật giao diện
             if (this.chuDe.Count == 0)
             {
                 TaoChuDeMoi();
@@ -124,9 +141,11 @@ namespace WPF_UI
             }
             CapNhatDanhSachChuDe();
             CapNhatTieuDeHienTai();
-            LuuChuDeVaoFile();
         }
 
+
+        // Thêm tin nhắn vào giao diện chat
+        // Thêm tin nhắn vào giao diện chat
         // Thêm tin nhắn vào giao diện chat
         private void ThemTinNhanVaoChat(string tinNhan, string tenNguoiGui, DateTime thoiGian)
         {
@@ -137,8 +156,35 @@ namespace WPF_UI
                 CornerRadius = new CornerRadius(15),
                 Padding = new Thickness(10),
                 Margin = new Thickness(5),
+                MaxWidth = ChatStackPanel.ActualWidth * 0.9, // Giới hạn chiều rộng tối đa 80% của ChatStackPanel
                 HorizontalAlignment = tenNguoiGui == "User" ? HorizontalAlignment.Right : HorizontalAlignment.Left
             };
+
+            // Tạo một Grid để chứa icon và tin nhắn
+            Grid containerGrid = new Grid();
+            containerGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            containerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            containerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            // Tạo Image để hiển thị icon
+            Image icon = new Image
+            {
+                Width = 30,
+                Height = 30,
+                Margin = new Thickness(5),
+                VerticalAlignment = VerticalAlignment.Top,
+                HorizontalAlignment = HorizontalAlignment.Left
+            };
+
+            // Thiết lập icon dựa trên người gửi
+            if (tenNguoiGui == "User")
+            {
+                icon.Source = new BitmapImage(new Uri("C:\\Users\\trung\\Documents\\GitHub\\ChatAI-WPF-C_Sharp\\Images\\user.png")); // Đường dẫn tương đối tới icon của User
+            }
+            else if (tenNguoiGui == "TrungAI")
+            {
+                icon.Source = new BitmapImage(new Uri("C:\\Users\\trung\\Documents\\GitHub\\ChatAI-WPF-C_Sharp\\Images\\ai.png")); // Đường dẫn tương đối tới icon của Bot
+            }
 
             // Tạo một StackPanel để chứa nội dung tin nhắn
             StackPanel messagePanel = new StackPanel();
@@ -148,14 +194,15 @@ namespace WPF_UI
             {
                 Text = tenNguoiGui,
                 FontWeight = FontWeights.Bold,
-                Margin = new Thickness(0, 0, 0, 2)
+                Margin = new Thickness(0, 0, 0, 2),
             };
 
             // Tạo TextBlock để hiển thị nội dung tin nhắn
             TextBlock messageBlock = new TextBlock
             {
                 Text = tinNhan,
-                TextWrapping = TextWrapping.Wrap
+                TextWrapping = TextWrapping.Wrap,
+                FontSize = 16
             };
 
             // Tạo TextBlock để hiển thị thời gian gửi tin nhắn
@@ -167,13 +214,23 @@ namespace WPF_UI
                 HorizontalAlignment = HorizontalAlignment.Right
             };
 
-            // Thêm các TextBlock vào StackPanel
+            // Thêm các TextBlock vào StackPanel messagePanel
             messagePanel.Children.Add(nameBlock);
             messagePanel.Children.Add(messageBlock);
             messagePanel.Children.Add(timeBlock);
 
-            // Thêm StackPanel vào Border
-            border.Child = messagePanel;
+            // Thêm icon vào containerGrid
+            Grid.SetRow(icon, 0);
+            Grid.SetColumn(icon, 0);
+            containerGrid.Children.Add(icon);
+
+            // Thêm messagePanel vào containerGrid
+            Grid.SetRow(messagePanel, 0);
+            Grid.SetColumn(messagePanel, 1);
+            containerGrid.Children.Add(messagePanel);
+
+            // Thêm containerGrid vào Border
+            border.Child = containerGrid;
             ChatStackPanel.Children.Add(border);
             ChatScrollViewer.ScrollToEnd();
         }
@@ -190,7 +247,7 @@ namespace WPF_UI
                 model = "gpt-3.5-turbo-16k",
                 messages = new[]
                 {
-                    new { role = "system", content = InstructionsTextBox.Text },
+                    new { role = "system", content = "Bạn là TrungAI. Bạn sẽ tư vấn tuyển sinh, chọn ngành nghề và một bạn đặc biệt phải các lưu ý sau: \"" + InstructionsTextBox.Text + "\"" },
                     new { role = "user", content = tinNhan }
                 },
                 max_tokens = (int)MaxTokensSlider.Value,
@@ -212,8 +269,8 @@ namespace WPF_UI
         {
             var chuDeHienTai = chuDe[chiSoChuDeHienTai];
             chuDeHienTai.Messages.Add(new Message { Content = tinNhanNguoiDung, Sender = "User", Timestamp = thoiGian });
-            chuDeHienTai.Messages.Add(new Message { Content = phanHoiBot, Sender = "Bot", Timestamp = DateTime.Now });
-            LuuChuDeVaoFile();
+            chuDeHienTai.Messages.Add(new Message { Content = phanHoiBot, Sender = "TrungAI", Timestamp = DateTime.Now });
+            LuuChuDeVaoMongo();
         }
 
         // Tạo chủ đề mới
@@ -224,7 +281,7 @@ namespace WPF_UI
             chiSoChuDeHienTai = chuDe.Count - 1;
             TaiChuDe(chuDeMoi);
             CapNhatDanhSachChuDe();
-            LuuChuDeVaoFile();
+            LuuChuDeVaoMongo();
         }
 
         // Tải chủ đề hiện tại
@@ -235,6 +292,7 @@ namespace WPF_UI
             {
                 ThemTinNhanVaoChat(message.Content, message.Sender, message.Timestamp);
             }
+            ChatScrollViewer.ScrollToEnd(); // Cuộn đến cuối cùng sau khi thêm tất cả tin nhắn
         }
 
         // Cập nhật danh sách chủ đề
@@ -249,15 +307,14 @@ namespace WPF_UI
                     Tag = chuDe
                 };
 
-                // Thêm sự kiện khi chọn chủ đề
                 listViewItem.Selected += (s, e) =>
                 {
                     var chuDeDuocChon = listViewItem.Tag as Thread;
                     chiSoChuDeHienTai = this.chuDe.IndexOf(chuDeDuocChon);
                     TaiChuDe(chuDeDuocChon);
+                    CapNhatTieuDeHienTai(); // Gọi phương thức cập nhật tiêu đề hiện tại
                 };
 
-                // Tạo menu context
                 var contextMenu = new ContextMenu();
                 var editTitleMenuItem = new MenuItem { Header = "Chỉnh sửa tiêu đề", Tag = chuDe };
                 editTitleMenuItem.Click += ChinhSuaTieuDe_Click;
@@ -306,40 +363,39 @@ namespace WPF_UI
         }
 
         // Lưu các chủ đề vào file
-        private void LuuChuDeVaoFile()
+        private void LuuChuDeVaoMongo()
         {
-            var json = JsonConvert.SerializeObject(chuDe);
-            File.WriteAllText(duongDanLichSuChat, json);
-        }
-
-        // Tải các chủ đề từ file
-        private void TaiChuDeTuFile()
-        {
-            if (File.Exists(duongDanLichSuChat))
+            foreach (var thread in chuDe)
             {
-                var json = File.ReadAllText(duongDanLichSuChat);
-                chuDe = JsonConvert.DeserializeObject<List<Thread>>(json);
-                if (chuDe != null && chuDe.Count > 0)
+                if (thread.Id == null)
                 {
-                    demChuDe = chuDe.Count;
-                    chiSoChuDeHienTai = 0;
-                    TaiChuDe(chuDe[chiSoChuDeHienTai]);
-                    CapNhatDanhSachChuDe();
+                    _threadsCollection.InsertOne(thread);
+                }
+                else
+                {
+                    var filter = Builders<Thread>.Filter.Eq(t => t.Id, thread.Id);
+                    _threadsCollection.ReplaceOne(filter, thread);
                 }
             }
         }
 
-        public class Thread
+        // Tải các chủ đề từ file
+        private void TaiChuDeTuMongo()
         {
-            public string Title { get; set; }
-            public List<Message> Messages { get; set; } = new List<Message>();
+            chuDe = _threadsCollection.Find(_ => true).ToList();
+            if (chuDe != null && chuDe.Count > 0)
+            {
+                demChuDe = chuDe.Count;
+                chiSoChuDeHienTai = 0; // Chọn chủ đề đầu tiên
+                CapNhatDanhSachChuDe(); // Cập nhật danh sách chủ đề
+                TaiChuDe(chuDe[chiSoChuDeHienTai]); // Hiển thị chủ đề đầu tiên
+                CapNhatTieuDeHienTai(); // Cập nhật tiêu đề hiện tại
+            }
+            else
+            {
+                TaoChuDeMoi(); // Tạo chủ đề mới nếu không có chủ đề nào
+            }
         }
 
-        public class Message
-        {
-            public string Content { get; set; }
-            public string Sender { get; set; }
-            public DateTime Timestamp { get; set; }
-        }
     }
 }

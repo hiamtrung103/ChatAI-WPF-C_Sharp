@@ -11,8 +11,8 @@
     <Window.Resources>
         <DropShadowEffect x:Key="DropShadow" Color="Black" BlurRadius="10" ShadowDepth="5" Opacity="0.5"/>
     </Window.Resources>
-    <Grid>
-        <Border CornerRadius="15" Background="White" Margin="10" Padding="10" Effect="{StaticResource DropShadow}">
+    <Grid Background="Transparent">
+        <Border CornerRadius="25" Background="White" Padding="10" Effect="{StaticResource DropShadow}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="1*" />

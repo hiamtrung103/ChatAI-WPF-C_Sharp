@@ -44,6 +44,24 @@
                 background-color: #D7D7D7;
                 color: #f4f4f4;
             }
+
+        .custom-class {
+            position: relative;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+            text-align: center;
+            font-size: 0.75rem;
+            color:
+        }
+
+        @media (min-width: 768px) {
+            .custom-class {
+                padding-left: 60px;
+                padding-right: 60px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -54,19 +72,18 @@
                 <img width="16" height="16" src="https://img.icons8.com/fluency/48/collapse-arrow.png" alt="collapse-arrow" />
             </button>
         </div>
-    </div>
-    <script>
-        document.getElementById('prompt-textarea').addEventListener('input', function () {
-            document.getElementById('send-button').disabled = !this.value.trim();
-        });
+        <script>
+            document.getElementById('prompt-textarea').addEventListener('input', function () {
+                document.getElementById('send-button').disabled = !this.value.trim();
+            });
 
-        document.getElementById('send-button').addEventListener('click', function () {
-            // phần này lấy nội dung chat và gửi về WPF
-            const message = document.getElementById('prompt-textarea').value;
-            window.chrome.webview.postMessage(message);
-            document.getElementById('prompt-textarea').value = '';
-            this.disabled = true;
-        });
-    </script>
+            document.getElementById('send-button').addEventListener('click', function () {
+                // phần này lấy nội dung chat và gửi về WPF
+                const message = document.getElementById('prompt-textarea').value;
+                window.chrome.webview.postMessage(message);
+                document.getElementById('prompt-textarea').value = '';
+                this.disabled = true;
+            });
+        </script>
 </body>
 </html>
