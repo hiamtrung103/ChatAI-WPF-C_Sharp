@@ -1,7 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using System.Net.Http;
-using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
@@ -20,7 +19,7 @@ namespace WPF_UI
 {
     public partial class Dashboard : UserControl
     {
-        private static readonly HttpClient httpClient = new HttpClient();
+        private readonly OpenAIService openAIService;
         private readonly IMongoCollection<Thread> _threadsCollection;
         private List<Thread> chuDe = new List<Thread>();
         private int demChuDe = 0;
@@ -29,6 +28,9 @@ namespace WPF_UI
         public Dashboard()
         {
             InitializeComponent();
+
+            var apiKey = "sk-proj-JMbRhiyE0ryWB3c3983tT3BlbkFJ9jnRYECRfHgxr89mDksK";
+            openAIService = new OpenAIService(apiKey);
 
             var mongoClient = new MongoClient(ConfigurationManager.AppSettings["MongoDbConnectionString"]);
             var mongoDatabase = mongoClient.GetDatabase(ConfigurationManager.AppSettings["MongoDbDatabaseName"]);
@@ -39,7 +41,6 @@ namespace WPF_UI
 
             ChatWebView.CoreWebView2InitializationCompleted += ChatWebView_CoreWebView2InitializationCompleted;
         }
-
 
         private async void ChatWebView_CoreWebView2InitializationCompleted(object sender, CoreWebView2InitializationCompletedEventArgs e)
         {
@@ -59,7 +60,14 @@ namespace WPF_UI
                 ThemTinNhanVaoChat(tinNhanNguoiDung, "User", thoiGian);
                 try
                 {
-                    string phanHoiBot = await LayPhanHoiChatbot(tinNhanNguoiDung);
+                    string instructions = InstructionsTextBox.Text;
+                    double maxTokens = MaxTokensSlider.Value;
+                    double temperature = TemperatureSlider.Value;
+                    double topP = TopPSlider.Value;
+                    double frequencyPenalty = FrequencyPenaltySlider.Value;
+                    double presencePenalty = PresencePenaltySlider.Value;
+
+                    string phanHoiBot = await openAIService.GetChatbotResponse(tinNhanNguoiDung, instructions, maxTokens, temperature, topP, frequencyPenalty, presencePenalty);
                     ThemTinNhanVaoChat(phanHoiBot, "TrungAI", DateTime.Now);
                     LuuTinNhanVaoChuDe(tinNhanNguoiDung, phanHoiBot, thoiGian);
                 }
@@ -143,9 +151,6 @@ namespace WPF_UI
             CapNhatTieuDeHienTai();
         }
 
-
-        // Thêm tin nhắn vào giao diện chat
-        // Thêm tin nhắn vào giao diện chat
         // Thêm tin nhắn vào giao diện chat
         private void ThemTinNhanVaoChat(string tinNhan, string tenNguoiGui, DateTime thoiGian)
         {
@@ -179,11 +184,11 @@ namespace WPF_UI
             // Thiết lập icon dựa trên người gửi
             if (tenNguoiGui == "User")
             {
-                icon.Source = new BitmapImage(new Uri("C:\\Users\\trung\\Documents\\GitHub\\ChatAI-WPF-C_Sharp\\Images\\user.png")); // Đường dẫn tương đối tới icon của User
+                icon.Source = new BitmapImage(new Uri("C:\\Users\\trung\\Documents\\GitHub\\ChatAI-WPF-C_Sharp\\Images\\user.png"));
             }
             else if (tenNguoiGui == "TrungAI")
             {
-                icon.Source = new BitmapImage(new Uri("C:\\Users\\trung\\Documents\\GitHub\\ChatAI-WPF-C_Sharp\\Images\\ai.png")); // Đường dẫn tương đối tới icon của Bot
+                icon.Source = new BitmapImage(new Uri("C:\\Users\\trung\\Documents\\GitHub\\ChatAI-WPF-C_Sharp\\Images\\ai.png"));
             }
 
             // Tạo một StackPanel để chứa nội dung tin nhắn
@@ -233,35 +238,6 @@ namespace WPF_UI
             border.Child = containerGrid;
             ChatStackPanel.Children.Add(border);
             ChatScrollViewer.ScrollToEnd();
-        }
-
-        // Gửi yêu cầu đến chatbot và nhận phản hồi
-        private async Task<string> LayPhanHoiChatbot(string tinNhan)
-        {
-            string apiKey = "sk-proj-JMbRhiyE0ryWB3c3983tT3BlbkFJ9jnRYECRfHgxr89mDksK";
-            httpClient.DefaultRequestHeaders.Remove("Authorization");
-            httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + apiKey);
-
-            var requestBody = new
-            {
-                model = "gpt-3.5-turbo-16k",
-                messages = new[]
-                {
-                    new { role = "system", content = "Bạn là TrungAI. Bạn sẽ tư vấn tuyển sinh, chọn ngành nghề và một bạn đặc biệt phải các lưu ý sau: \"" + InstructionsTextBox.Text + "\"" },
-                    new { role = "user", content = tinNhan }
-                },
-                max_tokens = (int)MaxTokensSlider.Value,
-                temperature = TemperatureSlider.Value,
-                top_p = TopPSlider.Value,
-                frequency_penalty = FrequencyPenaltySlider.Value,
-                presence_penalty = PresencePenaltySlider.Value
-            };
-
-            var response = await httpClient.PostAsJsonAsync("https://api.openai.com/v1/chat/completions", requestBody);
-            response.EnsureSuccessStatusCode(); // phản hồi nếu không thành công
-            string responseString = await response.Content.ReadAsStringAsync();
-            var responseJson = JObject.Parse(responseString);
-            return responseJson["choices"][0]["message"]["content"].ToString();
         }
 
         // Lưu tin nhắn vào chủ đề
@@ -362,7 +338,7 @@ namespace WPF_UI
             }
         }
 
-        // Lưu các chủ đề vào file
+        // Lưu các chủ đề vào MongoDB
         private void LuuChuDeVaoMongo()
         {
             foreach (var thread in chuDe)
@@ -379,7 +355,7 @@ namespace WPF_UI
             }
         }
 
-        // Tải các chủ đề từ file
+        // Tải các chủ đề từ MongoDB
         private void TaiChuDeTuMongo()
         {
             chuDe = _threadsCollection.Find(_ => true).ToList();
@@ -396,6 +372,5 @@ namespace WPF_UI
                 TaoChuDeMoi(); // Tạo chủ đề mới nếu không có chủ đề nào
             }
         }
-
     }
 }
