@@ -7,15 +7,15 @@ TrungAI - AI Chatbot Application
 
 
 ### Description
-TrungAI is an AI-powered chatbot application developed using .NET C# and WPF. This application allows users to interact with an AI model (GPT-3.5-turbo-16k) for various purposes by sending messages and receiving AI-generated responses. Users can customize the AI's behavior using several inference parameters.
+TrungAI is an AI-powered chatbot application developed using .NET C# and WPF. This application allows users to interact with an AI model (GPT-3.5-turbo-16k, GPT-4) for various purposes by sending messages and receiving AI-generated responses. Users can customize the AI's behavior using several inference parameters.
 
 ### Features
 - **AI Interaction**: Engage in conversations with the AI for various use cases.
 - **Customizable Responses**: Adjust the AI's response characteristics using parameters such as Max Tokens, Temperature, Top P, Frequency Penalty, and Presence Penalty.
 - **User-Friendly Interface**: Easy-to-use chat interface built with WPF.
+- **MongoDB Integration**: Stores chat data in MongoDB for persistence and analysis.
 
 ![Image](https://cdn.discordapp.com/attachments/1197399672633950288/1254394410074902578/image.png?ex=66795554&is=667803d4&hm=5bfdf9791773262834e5fa4043f1a9d5049c1aecb44a1629a008822e78ee105e&)
-
 
 ### Technologies Used
 - **.NET Framework**
@@ -29,7 +29,20 @@ TrungAI is an AI-powered chatbot application developed using .NET C# and WPF. Th
 1. Clone the repository: `git clone https://github.com/hiamtrung103/ChatAI-WPF-C_Sharp`
 2. Open the solution in Visual Studio.
 3. Build the solution to restore the necessary packages.
-4. Run the application.
+4. Configure MongoDB:
+   - Set up a MongoDB Atlas account or use your existing MongoDB instance.
+   - Update the `App.config` file with your MongoDB connection string and database details:
+     ```xml
+     <configuration>
+         <appSettings>
+             <add key="MongoDbConnectionString" value="your-mongodb-connection-string" />
+             <add key="MongoDbDatabaseName" value="ChatAppDatabase" />
+             <add key="MongoDbThreadsCollectionName" value="Threads" />
+         </appSettings>
+     </configuration>
+     ```
+   - Replace `your-mongodb-connection-string` with your actual MongoDB connection string.
+5. Run the application.
 
 ### Usage
 - Launch the application.
@@ -66,7 +79,6 @@ TrungAI là một ứng dụng chatbot sử dụng trí tuệ nhân tạo đư�
 
 ![Image](https://cdn.discordapp.com/attachments/1197399672633950288/1254394410074902578/image.png?ex=66795554&is=667803d4&hm=5bfdf9791773262834e5fa4043f1a9d5049c1aecb44a1629a008822e78ee105e&)
 
-
 ### Công Nghệ Sử Dụng
 - **.NET Framework**
 - **C#**
@@ -74,11 +86,25 @@ TrungAI là một ứng dụng chatbot sử dụng trí tuệ nhân tạo đư�
 - **WPF (Windows Presentation Foundation)**
 - **OpenAI GPT-3.5-turbo-16k**
 - **OpenAI GPT-4 & GPT-4o**
+
 ### Cài Đặt
 1. Clone repository: `git clone https://github.com/hiamtrung103/ChatAI-WPF-C_Sharp`
 2. Mở solution trong Visual Studio.
 3. Build solution để khôi phục các gói cần thiết.
-4. Chạy ứng dụng.
+4. Cấu hình MongoDB:
+   - Thiết lập tài khoản MongoDB Atlas hoặc sử dụng MongoDB hiện có của bạn.
+   - Cập nhật tệp `App.config` với chuỗi kết nối MongoDB và chi tiết cơ sở dữ liệu của bạn:
+     ```xml
+     <configuration>
+         <appSettings>
+             <add key="MongoDbConnectionString" value="chuoi-ket-noi-mongodb-cua-ban" />
+             <add key="MongoDbDatabaseName" value="ChatAppDatabase" />
+             <add key="MongoDbThreadsCollectionName" value="Threads" />
+         </appSettings>
+     </configuration>
+     ```
+   - Thay `chuoi-ket-noi-mongodb-cua-ban` bằng chuỗi kết nối MongoDB thực tế của bạn.
+5. Chạy ứng dụng.
 
 ### Sử Dụng
 - Khởi chạy ứng dụng.
@@ -89,10 +115,6 @@ TrungAI là một ứng dụng chatbot sử dụng trí tuệ nhân tạo đư�
   - **Top P**: Kiểm soát sự đa dạng của phản hồi (giá trị cao hơn = đa dạng hơn).
   - **Hình Phạt Tần Suất**: Phạt các từ mới dựa trên tần suất của chúng trong văn bản cho đến nay.
   - **Hình Phạt Hiện Diện**: Phạt các từ mới dựa trên việc chúng xuất hiện trong văn bản cho đến nay.
-
-### Ví Dụ Mã
-Dưới đây là một ví dụ về cách gọi API OpenAI với các tham số tùy chỉnh để nhận phản hồi chatbot:
-
 
 ### Đóng Góp
 Chúng tôi hoan nghênh các đóng góp! Vui lòng fork repository và tạo pull request với các thay đổi của bạn.
